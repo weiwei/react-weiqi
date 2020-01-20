@@ -1,4 +1,4 @@
-enum Pos {
+export enum Pos {
   EMPTY = 0,
   BLACK = 1,
   WHITE = 2
@@ -6,11 +6,11 @@ enum Pos {
 
 export default class Board {
   private currentColor: Pos;
-  private size: number;
+  public size: number;
   private board: any;
   private lastMovePassed: boolean;
-  private inAtari: boolean;
-  private isSuicideAttempt: boolean;
+  public inAtari: boolean;
+  public isSuicideAttempt: boolean;
 
   constructor(size: number) {
     this.currentColor = Pos.BLACK;
@@ -43,9 +43,87 @@ export default class Board {
     console.log("GAME OVER");
   };
 
-  play = () => {};
+  play = (i: number, j: number) => {
+    this.isSuicideAttempt = this.inAtari = false;
+    if (this.board[i][j] !== Pos.EMPTY) {
+      return false;
+    }
+    const color = (this.board[i][j] = this.currentColor);
+    const captured: any[] = [];
+    const neighbors = this.getNeighbors(i, j);
+    let atari = false;
 
-  getAdjacentIntersections = (i: number, j: number) => {};
+    neighbors.forEach(n => {
+      const state = this.board[n[0]][n[1]];
+      if (state !== Pos.EMPTY && state !== color) {
+        const group = this.getGroup(n[0], n[1]);
+        if (group && group["liberties"] === 0) {
+          captured.push(group);
+        } else if (group && group["liberties"] === 1) {
+          atari = true;
+        }
+      }
+    });
 
-  getGroup = (i: number, j: number) => {};
+    const grp = this.getGroup(i, j);
+    if (captured.length === 0 && grp && grp["liberties"] === 0) {
+      this.board[i][j] = Pos.EMPTY;
+      this.isSuicideAttempt = true;
+      return false;
+    }
+
+    captured.forEach(group =>
+      group["stones"].forEach(
+        (stone: any) => (this.board[stone[0]][stone[1]] = Pos.EMPTY)
+      )
+    );
+
+    if (atari) {
+      this.inAtari = true;
+    }
+
+    this.lastMovePassed = false;
+    this.switchPlayer();
+    return true;
+  };
+
+  getNeighbors = (i: number, j: number): any[] => {
+    const neighbors = [];
+    if (i > 0) neighbors.push([i - 1, j]);
+    if (j < this.size - 1) neighbors.push([i, j + 1]);
+    if (i < this.size - 1) neighbors.push([i + 1, j]);
+    if (j > 0) neighbors.push([i, j - 1]);
+    return neighbors;
+  };
+
+  getGroup = (i: number, j: number) => {
+    const color = this.board[i][j];
+    if (color === Pos.EMPTY) return null;
+
+    // const visited = {}; // for O(1) lookups
+    const visited_list = []; // for returning
+    const queue = [[i, j].join(",")];
+    let count = 0;
+
+    while (queue.length > 0) {
+      const stone = queue.pop();
+      // if (stone && visited[stone]) continue;
+
+      // var neighbors = this.getNeighbors(stone[0], stone[1]);
+      // eslint-disable-next-line no-loop-func
+      // neighbors.forEach(n => {
+      // const state = self.board[n[0]][n[1]];
+      // if (state === Pos.EMPTY) count++;
+      // if (state === color) queue.push([n[0], n[1]]);
+      // });
+
+      // visited[stone] = true;
+      visited_list.push(stone);
+    }
+
+    return {
+      liberties: count,
+      stones: visited_list
+    };
+  };
 }
