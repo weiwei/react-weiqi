@@ -13,7 +13,46 @@ interface BoardIntersectionProps {
   col: number;
 }
 
+export enum Position {
+  Default = "default",
+  UpperLeft = "upper-left",
+  UpperRight = "upper-right",
+  Upper = "upper",
+  Lower = "lower",
+  LowerLeft = "lower-left",
+  LowerRight = "lower-right",
+  Left = "left",
+  Right = "right",
+}
+
 const BoardIntersection = (props: BoardIntersectionProps) => {
+  let pos;
+  if (props.row === 0) {
+    if (props.col === 0) {
+      pos = Position.UpperLeft;
+    } else if (props.col === 18) {
+      pos = Position.UpperRight;
+    } else {
+      pos = Position.Upper;
+    }
+  } else if (props.row === 18) {
+    if (props.col === 0) {
+      pos = Position.LowerLeft;
+    } else if (props.col === 18) {
+      pos = Position.LowerRight;
+    } else {
+      pos = Position.Lower;
+    }
+  } else {
+    if (props.col === 0) {
+      pos = Position.Left;
+    } else if (props.col === 18) {
+      pos = Position.Right;
+    } else {
+      pos = Position.Default;
+    }
+  }
+
   return (
     <div
       className="intersection"
@@ -31,13 +70,13 @@ const BoardView = () => {
         BoardIntersection({
           color: Pos.EMPTY,
           row: i,
-          col: j
+          col: j,
           // onPlay: onPlay
         })
       );
   const style = {
     width: board.size * GRID_SIZE,
-    height: board.size * GRID_SIZE
+    height: board.size * GRID_SIZE,
   };
   return (
     <div style={style} id="board">
